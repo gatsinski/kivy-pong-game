@@ -1,10 +1,13 @@
 from kivy.app import App
+from kivy.core.window import Window
 from kivy.uix.widget import Widget
 from kivy.properties import (
     NumericProperty, ReferenceListProperty, ObjectProperty
 )
 from kivy.vector import Vector
 from kivy.clock import Clock
+
+from settings import PADDLE_SPEED, PLAYER1_CONTROLS, PLAYER2_CONTROLS
 
 
 class PongPaddle(Widget):
@@ -32,6 +35,11 @@ class PongGame(Widget):
     ball = ObjectProperty(None)
     player1 = ObjectProperty(None)
     player2 = ObjectProperty(None)
+
+    def __init__(self, **kwargs):
+        super(PongGame, self).__init__(**kwargs)
+        self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
+        self._keyboard.bind(on_key_down=self._on_key_down)
 
     def serve_ball(self, vel=(4, 0)):
         self.ball.center = self.center
@@ -61,6 +69,34 @@ class PongGame(Widget):
             self.player1.center_y = touch.y
         if touch.x > self.width - self.width / 3:
             self.player2.center_y = touch.y
+
+    def _keyboard_closed(self):
+        self._keyboard.unbind(on_key_down=self._on_key_down)
+        self._keyboard = None
+
+    def _on_key_down(self, keyboard, keycode, text, modifiers):
+        half_paddle = self.player1.height / 2
+        if (
+            keycode[1] == PLAYER1_CONTROLS["UP"]
+            and self.player1.center_y < self.height - half_paddle
+        ):
+            self.player1.center_y += PADDLE_SPEED
+        elif (
+            keycode[1] == PLAYER1_CONTROLS["DOWN"]
+            and self.player1.center_y > half_paddle
+        ):
+            self.player1.center_y -= PADDLE_SPEED
+        elif (
+            keycode[1] == PLAYER2_CONTROLS["UP"]
+            and self.player2.center_y < self.height - half_paddle
+        ):
+            self.player2.center_y += PADDLE_SPEED
+        elif (
+            keycode[1] == PLAYER2_CONTROLS["DOWN"]
+            and self.player2.center_y > half_paddle
+        ):
+            self.player2.center_y -= PADDLE_SPEED
+        return True
 
 
 class PongApp(App):
